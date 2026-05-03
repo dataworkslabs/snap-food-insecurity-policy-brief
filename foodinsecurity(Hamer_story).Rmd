@@ -1,0 +1,1013 @@
+---
+title: "Hunger in America is a Policy Crisis"
+author: "Mark Hamer"
+date: "May 3, 2026"
+output:
+  pdf_document:
+    toc: false
+    number_sections: false
+    fig_caption: true
+  html_document:
+    toc: false
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.width = 9,
+  fig.height = 5.5
+)
+library(usmap)
+library(ggplot2)
+library(dplyr)
+
+```
+
+## Introduction
+
+47 million Americans faced food insecurity in 2023. That is 1 in 7 
+households. This report is not about hunger in developing countries. 
+It is about hunger here. In every state. In working families.
+
+The United Nations tracks food insecurity as a global crisis. The data 
+shows it is also a domestic one. The difference is that in America, 
+hunger is not caused by drought or war. It is caused by policy. 
+Specifically, a nutrition assistance system that was designed with a 
+hard cutoff that punishes families for earning more.
+
+This report makes three arguments. First, food insecurity in America 
+is concentrated but universal. No state is fully exempt. Second, a large portion of the people 
+who go hungry are largely working people who earn too much to qualify 
+for help but too little to afford food. Third, the gap between what 
+SNAP provides and what adequate nutrition costs is large enough to 
+matter and small enough to fix.
+
+The data comes from Feeding America, the USDA, and the U.S. Census 
+Bureau. 
+
+## Where Hunger Happens
+
+Food insecurity is not evenly distributed. Some states are significantly 
+worse than others. The map below shows food insecurity rates by state 
+using 2023 data. The concentration in the South is not random. It 
+reflects decades of lower wages, weaker labor protections, and higher 
+poverty rates in that region.
+
+```{r}
+library(usmap)
+library(ggplot2)
+library(dplyr)
+
+fi_data <- data.frame(
+  state = c(
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC",
+    "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY",
+    "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT",
+    "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH",
+    "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT",
+    "VT", "VA", "WA", "WV", "WI", "WY"
+  ),
+  food_insecurity_rate = c(
+    17.5, 14.5, 14.4, 19.3, 13.7, 12.7, 14.3, 13.0, 12.4,
+    14.4, 14.9, 14.2, 12.7, 13.1, 15.1, 12.0, 14.0, 16.6,
+    18.1, 13.8, 13.3, 11.5, 15.4, 10.4, 19.4, 15.4, 12.3,
+    14.5, 15.1, 10.7, 11.7, 16.6, 14.5, 15.0,  9.9, 15.3,
+    18.4, 14.2, 13.2, 12.3, 14.1, 12.4, 15.6, 17.6, 14.2,
+    12.2, 12.1, 13.2, 15.7, 11.8, 15.4
+  )
+)
+
+plot_usmap(data = fi_data, values = "food_insecurity_rate", color = "white", linewidth = 0.3) +
+  scale_fill_gradient(
+    low    = "#fcbba1",
+    high   = "#67000d",
+    name   = "Share of residents\nfacing food insecurity",
+    limits = c(0, 20),
+    breaks = c(0, 5, 10, 15, 20),
+    labels = c("0%", "5%", "10%", "15%", "20%")
+  ) +
+  labs(
+    title    = "Geography Still Determines Who Goes Hungry in America",
+    subtitle = "Southern states consistently report food insecurity rates far above the national average.\nU.S. average: 13.5%  |  Worst states: MS 19.4%, AR 19.3%, OK 18.4%, LA 18.1%, TX 17.6%",
+    caption  = "Source: Feeding America, Map the Meal Gap 2025 (2023 data)\nNote: No state falls below 9%. Every state on this map has a hunger problem."
+  ) +
+  theme(
+    legend.position  = "right",
+    plot.title       = element_text(size = 13, face = "bold", hjust = 0.5),
+    plot.subtitle    = element_text(size = 9, color = "gray30", hjust = 0.5),
+    plot.caption     = element_text(size = 8, color = "gray50"),
+    legend.title     = element_text(size = 9),
+    legend.text      = element_text(size = 8),
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background  = element_rect(fill = "white", color = NA)
+  )
+```
+Mississippi, Arkansas, Oklahoma, Louisiana, and Alabama all exceed 17%. 
+North Dakota is the lowest at 9.9%. Every single state is above 9%. 
+There is no state where hunger is not a problem.
+
+---
+
+## Who Hunger Affects
+
+Food insecurity does not affect everyone equally. Some groups face it 
+at rates far above the national average. Understanding who is most 
+affected is the first step to understanding why the system fails them. 
+The chart below breaks down food insecurity rates by age group and 
+household type using 2023 national data.
+
+```{r}
+library(ggplot2)
+
+demo_data <- data.frame(
+  group = c(
+    "Women with children",
+    "Men with children",
+    "Children under 18",
+    "Women living alone",
+    "Working age adults",
+    "Men living alone",
+    "Adults 50 to 59",
+    "Seniors 60 and older"
+  ),
+  rate = c(35.3, 23.3, 18.2, 16.8, 15.1, 13.9, 11.8, 8.2),
+  highlight = c(TRUE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE)
+)
+
+demo_data$group <- factor(
+  demo_data$group,
+  levels = demo_data$group[order(demo_data$rate)]
+)
+
+ggplot(demo_data, aes(x = rate, y = group, fill = highlight)) +
+  geom_col(width = 0.6) +
+  geom_vline(
+    xintercept = 13.5,
+    linetype   = "dashed",
+    color      = "gray50",
+    linewidth  = 0.5
+  ) +
+  annotate("text",
+    x = 13.7, y = 0.5,
+    label = "National avg 13.5%",
+    size  = 2.6, color = "gray50", hjust = 0
+  ) +
+  geom_text(
+    aes(label = paste0(rate, "%")),
+    hjust    = -0.15,
+    size     = 3.2,
+    fontface = "bold",
+    color    = "gray20"
+  ) +
+  scale_fill_manual(
+    values = c("TRUE" = "#67000d", "FALSE" = "#cb4c4c")
+  ) +
+  scale_x_continuous(
+    limits = c(0, 44),
+    labels = function(x) paste0(x, "%")
+  ) +
+  labs(
+    title    = "Children and Single Mothers Face the Highest Rates of Food Insecurity",
+    subtitle = "Food insecurity falls hardest on children and women raising families alone.\nAll rates are national averages for 2023.",
+    x        = "Food insecurity rate (%)",
+    y        = NULL,
+    caption  = "Sources: Feeding America MMG 2025; USDA ERS Household Food Security Report 2023"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title         = element_text(face = "bold", size = 12),
+    plot.subtitle      = element_text(size = 9, color = "gray40", lineheight = 1.4),
+    plot.caption       = element_text(size = 8, color = "gray50"),
+    legend.position    = "none",
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor   = element_blank(),
+    panel.grid.major.x = element_line(color = "gray93"),
+    plot.margin        = margin(10, 20, 10, 20)
+  )
+```
+
+Women raising children alone face a 35.3% food insecurity rate. That 
+is more than 1 in 3 households. Children under 18 face an 18.2% rate. 
+Seniors face the lowest rate at 8.2%, partly because Social Security 
+and Medicare provide more stable support than SNAP does for working 
+age adults.
+
+The child rate matters most for what comes next. Food insecurity in 
+childhood does not stay in childhood. It follows children into 
+adulthood through lower educational attainment, worse health outcomes, 
+and lower earnings. The chart below shows that progression.
+
+---
+
+A food insecure child is more likely to fall behind in school, less 
+likely to graduate, more likely to face chronic illness, and more 
+likely to be food insecure as an adult. This is not a temporary 
+hardship that resolves itself. It is a cycle that the current system 
+reproduces.
+
+
+```{r}
+library(ggplot2)
+library(grid)
+
+childhood <- data.frame(
+  x     = 0,
+  y     = 3,
+  label = "Children facing\nfood insecurity\n18.2% nationally",
+  type  = "start"
+)
+
+outcomes <- data.frame(
+  x = 1,
+  y = c(5, 4, 3, 2, 1),
+  label = c(
+    "26% more likely to be\nbelow grade level in reading",
+    "22% less likely to\ngraduate high school",
+    "35% higher rates of\nchronic illness in adulthood",
+    "20% lower lifetime\nearnings on average",
+    "28% face food insecurity\nas adults"
+  ),
+  type = "outcome"
+)
+
+# connection lines from start node to each outcome
+connections <- data.frame(
+  x    = rep(0.05, 5),
+  xend = rep(0.85, 5),
+  y    = rep(3, 5),
+  yend = outcomes$y
+)
+
+ggplot() +
+  geom_segment(
+    data = connections,
+    aes(x = x, xend = xend, y = y, yend = yend),
+    color     = "#cb4c4c",
+    linewidth = 0.7,
+    alpha     = 0.5
+  ) +
+  geom_rect(
+    data = childhood,
+    aes(xmin = -0.3, xmax = 0.3, ymin = y - 0.55, ymax = y + 0.55),
+    fill  = "#67000d",
+    color = NA
+  ) +
+  geom_text(
+    data = childhood,
+    aes(x = x, y = y, label = label),
+    color    = "white",
+    size     = 3,
+    fontface = "bold",
+    lineheight = 1.3
+  ) +
+  geom_rect(
+    data = outcomes,
+    aes(xmin = 0.7, xmax = 1.3, ymin = y - 0.38, ymax = y + 0.38),
+    fill  = "#cb4c4c",
+    color = NA,
+    alpha = 0.9
+  ) +
+  geom_text(
+    data = outcomes,
+    aes(x = x, y = y, label = label),
+    color      = "white",
+    size       = 2.8,
+    lineheight = 1.3
+  ) +
+  annotate("text",
+    x = 0.5, y = 6,
+    label    = "leads to",
+    size     = 3.5,
+    color    = "gray50",
+    fontface = "italic"
+  ) +
+  scale_x_continuous(limits = c(-0.5, 1.6)) +
+  scale_y_continuous(limits = c(0.3, 6.5)) +
+  labs(
+    title    = "Food Insecure Children Are Less Likely to Become Fully Independent Adults",
+    subtitle = "Childhood food insecurity is linked to worse outcomes across education, health, and earnings.\nThese are not isolated effects. They compound over a lifetime.",
+    caption  = "Sources: USDA ERS; Urban Institute; Annie E. Casey Foundation; Center on Budget and Policy Priorities\nNote: Outcome statistics reflect elevated rates among populations who experienced childhood food insecurity."
+  ) +
+  theme_void() +
+  theme(
+    plot.title    = element_text(face = "bold", size = 12, hjust = 0.5,
+                                 margin = margin(b = 6)),
+    plot.subtitle = element_text(size = 9, color = "gray40", hjust = 0.5,
+                                 lineheight = 1.4, margin = margin(b = 10)),
+    plot.caption  = element_text(size = 7, color = "gray50", hjust = 0.5,
+                                 lineheight = 1.3, margin = margin(t = 10)),
+    plot.margin   = margin(15, 20, 15, 20),
+    plot.background = element_rect(fill = "white", color = NA)
+  )
+```
+
+This brings us to the structural question. If these outcomes are 
+predictable and measurable, why does the system continue to produce 
+them? The answer is in how SNAP is designed, who it covers, and how 
+much it provides. The charts that follow show each of those failures 
+in turn.
+
+---
+
+## Why It Happens
+
+The map shows where hunger is worst. This chart shows why. States with 
+higher poverty rates consistently have higher food insecurity rates. 
+This is not a coincidence. It is a structural relationship. When 
+families cannot afford basic expenses, food is often the first thing 
+that gets cut. Each point on the chart below is a state. The line 
+shows the national trend. 
+
+```{r packages}
+library(ggplot2)
+library(ggrepel)
+
+state_data <- data.frame(
+  state = c(
+    "Alabama", "Alaska", "Arizona", "Arkansas", "California",
+    "Colorado", "Connecticut", "Delaware", "Florida", "Georgia",
+    "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa",
+    "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland",
+    "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri",
+    "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey",
+    "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
+    "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina",
+    "South Dakota", "Tennessee", "Texas", "Utah", "Vermont",
+    "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"
+  ),
+  food_insecurity = c(
+    17.5, 14.5, 14.4, 19.3, 13.7, 12.7, 14.3, 13.0, 14.4, 14.9,
+    14.2, 12.7, 13.1, 15.1, 12.0, 14.0, 16.6, 18.1, 13.8, 13.3,
+    11.5, 15.4, 10.4, 19.4, 15.4, 12.3, 14.5, 15.1, 10.7, 11.7,
+    16.6, 14.5, 15.0,  9.9, 15.3, 18.4, 14.2, 13.2, 12.3, 14.1,
+    12.4, 15.6, 17.6, 14.2, 12.2, 12.1, 13.2, 15.7, 11.8, 15.4
+  ),
+  poverty_rate = c(
+    16.9, 10.7, 13.5, 16.8, 12.5,  9.1, 10.4,  9.9, 13.5, 13.9,
+    10.6, 11.5, 12.0, 12.2,  9.6, 11.0, 16.6, 18.6, 10.9,  8.0,
+     9.7, 13.6,  8.9, 18.7, 13.4, 13.5, 10.1, 12.8,  7.0,  9.0,
+    19.8, 13.4, 14.2,  9.2, 13.5, 16.3, 12.3, 11.4, 10.4, 15.0,
+    11.1, 14.6, 14.7,  8.9,  9.5,  9.5,  9.4, 17.0, 10.5, 10.5
+  )
+)
+
+highlight_states <- c(
+  "Mississippi", "Arkansas", "Louisiana",
+  "Oklahoma", "West Virginia", "Minnesota", "New Hampshire"
+)
+
+state_data$highlight <- state_data$state %in% highlight_states
+
+ggplot(state_data, aes(x = poverty_rate, y = food_insecurity)) +
+  geom_point(
+    data = subset(state_data, !highlight),
+    color = "gray75", size = 2.5, alpha = 0.6
+  ) +
+  geom_point(
+    data = subset(state_data, highlight),
+    color = "#b22222", size = 3.5, alpha = 0.95
+  ) +
+  geom_smooth(
+    method = "lm", se = TRUE,
+    color = "gray40", fill = "gray90",
+    linewidth = 0.6, alpha = 0.3
+  ) +
+  geom_vline(
+    xintercept = mean(state_data$poverty_rate),
+    linetype = "dashed", color = "gray60", linewidth = 0.4
+  ) +
+  geom_hline(
+    yintercept = mean(state_data$food_insecurity),
+    linetype = "dashed", color = "gray60", linewidth = 0.4
+  ) +
+  annotate("text",
+    x = mean(state_data$poverty_rate) + 0.2,
+    y = 10.6,
+    label = "Avg poverty",
+    size = 2.5, color = "gray50", hjust = 0
+  ) +
+  annotate("text",
+    x = 7.2,
+    y = mean(state_data$food_insecurity) + 0.3,
+    label = "Avg food insecurity",
+    size = 2.5, color = "gray50", hjust = 0
+  ) +
+  geom_label_repel(
+    data = subset(state_data, highlight),
+    aes(label = state),
+    size = 2.8,
+    color = "#b22222",
+    fill = "white",
+    label.size = 0.2,
+    min.segment.length = 0,
+    box.padding = 0.5,
+    show.legend = FALSE
+  ) +
+  scale_x_continuous(
+    labels = function(x) paste0(x, "%"),
+    limits = c(6.5, 21)
+  ) +
+  scale_y_continuous(
+    labels = function(x) paste0(x, "%"),
+    limits = c(9.5, 20.5)
+  ) +
+  labs(
+    title    = "States With Higher Poverty Rates Also Face Higher Food Insecurity",
+    subtitle = "States with higher poverty rates consistently experience higher food insecurity.\nEach point represents a state. Highlighted states are the clearest outliers.",
+    x        = "Poverty rate (%)",
+    y        = "Food insecurity rate (%)",
+    caption  = "Sources: Feeding America MMG 2025; U.S. Census Bureau ACS 2023"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title       = element_text(face = "bold", size = 12),
+    plot.subtitle    = element_text(size = 9, color = "gray40"),
+    plot.caption     = element_text(size = 8, color = "gray50"),
+    legend.position  = "none",
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(color = "gray93")
+  )
+```
+
+New Mexico has a 19.8% poverty rate and a 16.6% food insecurity rate. 
+New Hampshire has a 7% poverty rate and a 10.7% food insecurity rate. 
+The relationship holds across every region. Poverty and hunger move 
+together. Any serious attempt to reduce food insecurity has to address 
+the economic conditions that create it.
+
+---
+
+
+## What Adequate Nutrition Actually Costs
+
+The USDA publishes a monthly cost estimate for the cheapest diet that 
+still meets nutritional guidelines. It is called the Thrifty Food Plan. 
+It assumes all meals are cooked at home and represents the absolute 
+floor of adequate nutrition. The chart below compares what that costs 
+for four common household types against what the average SNAP benefit 
+actually provides.
+
+```{r}
+library(ggplot2)
+library(scales)
+
+household_nutrition <- data.frame(
+  household = c(
+    "Single adult",
+    "Single adult\nwith one child",
+    "Two adults",
+    "Two adults\nwith two children"
+  ),
+  tfp_cost  = c(330, 490, 605, 984),
+  avg_snap  = c(183, 366, 366, 732)
+)
+
+household_nutrition$gap <- household_nutrition$tfp_cost - household_nutrition$avg_snap
+
+household_nutrition$household <- factor(
+  household_nutrition$household,
+  levels = c(
+    "Single adult",
+    "Single adult\nwith one child",
+    "Two adults",
+    "Two adults\nwith two children"
+  )
+)
+
+# reshape to long for grouped bars
+nutrition_long <- rbind(
+  data.frame(
+    household = household_nutrition$household,
+    amount    = household_nutrition$avg_snap,
+    type      = "Average SNAP benefit"
+  ),
+  data.frame(
+    household = household_nutrition$household,
+    amount    = household_nutrition$tfp_cost,
+    type      = "Minimum nutritious diet cost"
+  )
+)
+
+nutrition_long$type <- factor(
+  nutrition_long$type,
+  levels = c("Average SNAP benefit", "Minimum nutritious diet cost")
+)
+
+# gap labels for annotation
+gap_labels <- data.frame(
+  household = household_nutrition$household,
+  tfp_cost  = household_nutrition$tfp_cost,
+  gap       = household_nutrition$gap,
+  label     = paste0("$", household_nutrition$gap, " gap")
+)
+
+ggplot(nutrition_long, aes(x = household, y = amount, fill = type)) +
+  geom_col(position = "dodge", width = 0.6) +
+  geom_text(
+    data = gap_labels,
+    aes(
+      x     = household,
+      y     = tfp_cost + 25,
+      label = label,
+      fill  = NULL
+    ),
+    size     = 3,
+    fontface = "bold",
+    color    = "#8b0000"
+  ) +
+  scale_fill_manual(
+    values = c(
+      "Average SNAP benefit"         = "#4a9e6b",
+      "Minimum nutritious diet cost" = "#c0392b"
+    ),
+    name = NULL
+  ) +
+  scale_y_continuous(
+    labels = dollar_format(),
+    limits = c(0, 1100),
+    breaks = seq(0, 1000, 200)
+  ) +
+  labs(
+    title    = "SNAP Benefits Do Not Cover the Cost of a Minimum Nutritious Diet",
+    subtitle = "Average SNAP benefits fall short for every household type.\nThe gap ranges from $124 to $252 per month.",
+    x        = NULL,
+    y        = "Monthly cost ($)",
+    caption  = "Sources: USDA Thrifty Food Plan November 2024; USDA FNS SNAP Data 2023\nNote: Thrifty Food Plan costs include household size adjustment factors. SNAP benefit is the average per person ($183) multiplied by household size."
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title       = element_text(face = "bold", size = 12),
+    plot.subtitle    = element_text(size = 9, color = "gray40", lineheight = 1.4),
+    plot.caption     = element_text(size = 7, color = "gray50", lineheight = 1.3),
+    legend.position  = "bottom",
+    legend.text      = element_text(size = 10),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(color = "gray93"),
+    axis.text.x      = element_text(size = 9, lineheight = 1.4),
+    plot.margin      = margin(15, 20, 15, 20)
+  )
+```
+
+The average SNAP benefit falls short for every household type. A single 
+adult receives an average of $183 per month but needs $330 to meet the 
+minimum nutrition standard. A family of four receives $732 on average 
+but needs $984. The gap ranges from $124 to $252 per month depending 
+on household size. These are not large numbers in the context of a 
+federal budget. They are very large numbers for a family trying to eat.
+
+---
+
+## Who Actually Goes Hungry
+
+Food insecurity is often assumed to affect people who do not work. The 
+data does not support that assumption. The chart below shows food 
+insecurity rates by income level. People below the poverty line face 
+the highest rates. But people above the poverty line who do not qualify 
+for SNAP face a 28% food insecurity rate. That is nearly double the 
+national average. They earn too much for help. They do not earn enough 
+to eat.
+
+```{r}
+income_data <- data.frame(
+  category = c(
+    "Below poverty line",
+    "Above poverty line,\nbut limited SNAP access (130-185% FPL)",
+    "Above 185% FPL,\nno SNAP access"
+  ),
+  rate = c(39.4, 28.1, 6.2)
+)
+
+income_data$category <- factor(
+  income_data$category,
+  levels = income_data$category[order(income_data$rate)]
+)
+
+income_data$highlight <- income_data$category == "Above poverty line,\nbut limited SNAP access (130-185% FPL)"
+
+ggplot(income_data, aes(x = rate, y = category, fill = highlight)) +
+  geom_col(width = 0.5) +
+  geom_vline(
+    xintercept = 13.5,
+    linetype = "dashed",
+    color = "gray50",
+    linewidth = 0.5
+  ) +
+  annotate("text",
+  x = 13.7, y = 3.4,
+  label = "National avg 13.5%",
+  size = 2.6, color = "gray50", hjust = 0
+)+
+  geom_text(
+    aes(label = paste0(rate, "%")),
+    hjust = -0.15, size = 3.2,
+    fontface = "bold", color = "gray20"
+  ) +
+  scale_fill_manual(
+    values = c("TRUE" = "#8b4513", "FALSE" = "#cb4c4c")
+  ) +
+  scale_x_continuous(
+    limits = c(0, 46),
+    labels = function(x) paste0(x, "%")
+  ) +
+  labs(
+    title    = "Earning More Than the Poverty Line Does Not Mean You Can Afford Food",
+    subtitle = "People above the poverty line but below 185% FPL face a 28% food insecurity rate.\nThey earn too much for SNAP. They do not earn enough to eat.",
+    x        = "Food insecurity rate (%)",
+    y        = NULL,
+    caption  = "Source: USDA ERS Household Food Security Report 2023"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title         = element_text(face = "bold", size = 12),
+    plot.subtitle      = element_text(size = 9, color = "gray40"),
+    plot.caption       = element_text(size = 8, color = "gray50"),
+    legend.position    = "none",
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor   = element_blank(),
+    panel.grid.major.x = element_line(color = "gray93")
+  )
+```
+
+This group is sometimes called the working poor. They are employed. 
+They pay taxes. They do not qualify for SNAP because their income 
+exceeds 130% of the federal poverty line. In 2025 that cutoff is 
+$20,345 for a single person. A person earning $21,000 per year gets 
+no SNAP assistance. They also cannot afford adequate nutrition on that 
+income in most parts of the country.
+
+---
+
+## The System Punishes Earning More
+
+SNAP eligibility cuts off at 130% of the federal poverty line. There 
+is no gradual reduction. One dollar over the limit and the entire 
+benefit disappears. A $1,000 annual raise adds $83 per month to a 
+household's income. But crossing the SNAP threshold means losing 
+hundreds of dollars in monthly benefits at once. The net result is 
+negative. The charts below show the math for every household size.
+
+
+```{r}
+
+library(ggplot2)
+library(scales)
+library(dplyr)
+
+waterfall_data <- data.frame(
+  household = rep(c("1-Person", "2-Person", "3-Person", "4-Person"), each = 3),
+  label = rep(c("Pay raise", "SNAP lost", "Net change"), 4),
+  value = c(
+     83, -167, -84,
+     83, -153, -70,
+     83,  -96, -13,
+     83,  -70, -17
+  ),
+  type = rep(c("gain", "loss", "net"), 4)
+)
+
+waterfall_data$household <- factor(
+  waterfall_data$household,
+  levels = c("1-Person", "2-Person", "3-Person", "4-Person")
+)
+
+waterfall_data$label <- factor(
+  waterfall_data$label,
+  levels = c("Pay raise", "SNAP lost", "Net change")
+)
+
+waterfall_data$type <- factor(
+  waterfall_data$type,
+  levels = c("gain", "loss", "net"),
+  labels = c("Pay raise", "SNAP benefits lost", "Net change")
+)
+
+waterfall_data$fill <- case_when(
+  waterfall_data$type == "Pay raise"          ~ "#4a9e6b",
+  waterfall_data$type == "SNAP benefits lost" ~ "#c0392b",
+  waterfall_data$type == "Net change"         ~ "#2c2c2c"
+)
+
+waterfall_data$value_label <- case_when(
+  waterfall_data$type == "Pay raise"          ~ paste0("+$", waterfall_data$value, "/mo"),
+  waterfall_data$type == "Net change"         ~ paste0("Net: -$", abs(waterfall_data$value), "/mo"),
+  TRUE                                        ~ paste0("-$", abs(waterfall_data$value), "/mo")
+)
+
+waterfall_data$vjust_val    <- ifelse(waterfall_data$value >= 0, -0.6, 1.5)
+waterfall_data$fontface_val <- ifelse(waterfall_data$type == "Net change", "bold", "plain")
+
+ggplot(waterfall_data, aes(x = label, y = value, fill = type)) +
+  geom_col(width = 0.45) +
+  geom_hline(yintercept = 0, color = "gray40", linewidth = 0.5) +
+  geom_text(
+    aes(
+      label    = value_label,
+      vjust    = vjust_val,
+      fontface = fontface_val
+    ),
+    size  = 3,
+    color = "gray20"
+  ) +
+  scale_fill_manual(
+    values = c(
+      "Pay raise"          = "#4a9e6b",
+      "SNAP benefits lost" = "#c0392b",
+      "Net change"         = "#2c2c2c"
+    ),
+    name = NULL
+  ) +
+  scale_y_continuous(
+    labels = dollar_format(),
+    limits = c(-240, 160),
+    breaks = seq(-200, 100, 50)
+  ) +
+  facet_wrap(~household, ncol = 4) +
+  labs(
+    title    = "SNAP Benefit Cliffs Can Offset the Gains From a Raise",
+    subtitle = "A $1,000 annual raise adds about $83 per month.\nCrossing the SNAP cutoff can reduce benefits by even more, leaving families with less than before.",
+    x        = NULL,
+    y        = "Monthly change in resources ($)",
+    caption  = "Sources: USDA SNAP max allotments 2025; HHS Federal Poverty Guidelines 2025"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title         = element_text(face = "bold", size = 13, margin = margin(b = 6)),
+    plot.subtitle      = element_text(size = 10, color = "gray40",
+                                      lineheight = 1.6, margin = margin(b = 16)),
+    plot.caption       = element_text(size = 8, color = "gray50", margin = margin(t = 12)),
+    strip.text         = element_text(face = "bold", size = 11, margin = margin(b = 10)),
+    legend.position    = "bottom",
+    legend.text        = element_text(size = 10),
+    legend.spacing.x   = unit(0.5, "cm"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor   = element_blank(),
+    panel.grid.major.y = element_line(color = "gray93"),
+    panel.spacing      = unit(2.5, "lines"),
+    plot.margin        = margin(15, 25, 15, 25),
+    axis.text.x        = element_blank(),
+    axis.text.y        = element_text(size = 9),
+    axis.title.y       = element_text(size = 10, margin = margin(r = 10))
+  )
+```
+
+A single person who crosses the cutoff loses $167 per month in net 
+resources despite earning more. A two-person household loses $70. 
+This is not a design flaw. It is how the program was built. The 
+rational response for many families is to avoid the raise entirely. 
+The policy does not reward work. It penalizes crossing an arbitrary 
+line.
+
+---
+
+## What a Better System Could Look Like
+
+The cliff effect is not inevitable. It is a product of a binary 
+eligibility threshold. Benefits either exist at full value or they 
+disappear. A gradual phase-out model would reduce benefits slowly as 
+income rises rather than eliminating them at a single cutoff point. 
+The chart below shows the same $1,000 raise scenario under a gradual 
+phase-out model for each household size.
+
+
+```{r}
+library(ggplot2)
+library(scales)
+library(dplyr)
+
+waterfall_data <- data.frame(
+  household = rep(c("1-Person", "2-Person", "3-Person", "4-Person"), each = 3),
+  label     = rep(c("Pay raise", "SNAP reduction", "Net change"), 4),
+  value     = c(
+     83, -40,  43,
+     83, -40,  43,
+     83, -25,  58,
+     83, -20,  63
+  ),
+  type = rep(c("gain", "loss", "net"), 4)
+)
+
+waterfall_data$household <- factor(
+  waterfall_data$household,
+  levels = c("1-Person", "2-Person", "3-Person", "4-Person")
+)
+
+waterfall_data$label <- factor(
+  waterfall_data$label,
+  levels = c("Pay raise", "SNAP reduction", "Net change")
+)
+
+waterfall_data$value_label <- case_when(
+  waterfall_data$type == "gain" ~ paste0("+$", waterfall_data$value, "/mo"),
+  waterfall_data$type == "net"  ~ paste0("Net: +$", waterfall_data$value, "/mo"),
+  TRUE                          ~ paste0("-$", abs(waterfall_data$value), "/mo")
+)
+
+waterfall_data$vjust_val    <- ifelse(waterfall_data$value >= 0, -0.6, 1.5)
+waterfall_data$fontface_val <- ifelse(waterfall_data$type == "net", "bold", "plain")
+
+ggplot(waterfall_data, aes(x = label, y = value, fill = type)) +
+  geom_col(width = 0.45) +
+  geom_hline(yintercept = 0, color = "gray40", linewidth = 0.5) +
+  geom_text(
+    aes(
+      label    = value_label,
+      vjust    = vjust_val,
+      fontface = fontface_val
+    ),
+    size  = 3.2,
+    color = "gray20"
+  ) +
+  scale_fill_manual(
+    values = c(
+      "gain" = "#4a9e6b",
+      "loss" = "#c0392b",
+      "net"  = "#2e7d32"
+    ),
+    labels = c(
+      "gain" = "Pay raise",
+      "loss" = "SNAP reduction",
+      "net"  = "Net change"
+    ),
+    name = NULL
+  ) +
+  scale_y_continuous(
+    labels = dollar_format(),
+    limits = c(-80, 130),
+    breaks = seq(-80, 130, 40)
+  ) +
+  facet_wrap(~household, ncol = 4) +
+  labs(
+    title    = "A Gradual Phase-Out Means Every Household Keeps More From a Raise",
+    subtitle = "Under a gradual phase-out, SNAP benefits reduce slowly as income rises.\nA $1,000 annual raise produces a net gain for every household size.",
+    x        = NULL,
+    y        = "Monthly change in resources ($)",
+    caption  = "Sources: USDA SNAP 2025; HHS Federal Poverty Guidelines 2025\nNote: SNAP reductions are illustrative based on a proportional taper model."
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title         = element_text(face = "bold", size = 13, margin = margin(b = 6)),
+    plot.subtitle      = element_text(size = 10, color = "gray40",
+                                      lineheight = 1.5, margin = margin(b = 16)),
+    plot.caption       = element_text(size = 7, color = "gray50",
+                                      lineheight = 1.3, margin = margin(t = 12)),
+    strip.text         = element_text(face = "bold", size = 11, margin = margin(b = 10)),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor   = element_blank(),
+    panel.grid.major.y = element_line(color = "gray93"),
+    panel.spacing      = unit(2.5, "lines"),
+    plot.margin        = margin(15, 25, 15, 25),
+    axis.text.x        = element_blank(),
+    axis.text.y        = element_text(size = 9),
+    axis.title.y       = element_text(size = 10, margin = margin(r = 10)),
+    legend.position    = "bottom",
+    legend.text        = element_text(size = 10)
+  )
+```
+
+Under a gradual phase-out, a $1,000 raise produces a net gain for 
+every household size. The benefit reduction is smaller and the family 
+keeps more of what they earn. This is not a radical proposal. It is 
+how most phase-out programs in other countries are structured. It 
+preserves work incentives without eliminating support for families 
+who still need it.
+
+---
+
+## What Reform Would Look Like at the National Level
+
+The opening map showed food insecurity as it exists today. The maps 
+below show today alongside a projected outcome if SNAP benefits were 
+expanded to meet the Thrifty Food Plan minimum cost. The projection 
+applies a conservative 20% reduction in food insecurity rates based 
+on research linking adequate benefit levels to improved outcomes. 
+Both maps use the same color scale.
+
+```{r}
+library(usmap)
+library(ggplot2)
+library(patchwork)
+
+fi_current <- data.frame(
+  state = c(
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC",
+    "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY",
+    "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT",
+    "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH",
+    "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT",
+    "VT", "VA", "WA", "WV", "WI", "WY"
+  ),
+  food_insecurity_rate = c(
+    17.5, 14.5, 14.4, 19.3, 13.7, 12.7, 14.3, 13.0, 12.4,
+    14.4, 14.9, 14.2, 12.7, 13.1, 15.1, 12.0, 14.0, 16.6,
+    18.1, 13.8, 13.3, 11.5, 15.4, 10.4, 19.4, 15.4, 12.3,
+    14.5, 15.1, 10.7, 11.7, 16.6, 14.5, 15.0,  9.9, 15.3,
+    18.4, 14.2, 13.2, 12.3, 14.1, 12.4, 15.6, 17.6, 14.2,
+    12.2, 12.1, 13.2, 15.7, 11.8, 15.4
+  )
+)
+
+fi_projected <- data.frame(
+  state = c(
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC",
+    "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY",
+    "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT",
+    "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH",
+    "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT",
+    "VT", "VA", "WA", "WV", "WI", "WY"
+  ),
+  food_insecurity_rate = c(
+    14.0, 11.6, 11.5, 15.4, 11.0, 10.2, 11.4, 10.4,  9.9,
+    11.5, 11.9, 11.4, 10.2, 10.5, 12.1,  9.6, 11.2, 13.3,
+    14.5, 11.0, 10.6,  9.2, 12.3,  8.3, 15.5, 12.3,  9.8,
+    11.6, 12.1,  8.6,  9.4, 13.3, 11.6, 12.0,  7.9, 12.2,
+    14.7, 11.4, 10.6,  9.8, 11.3,  9.9, 12.5, 14.1, 11.4,
+     9.8,  9.7, 10.6, 12.6,  9.4, 12.3
+  )
+)
+
+shared_scale <- scale_fill_gradient(
+  low    = "#fcbba1",
+  high   = "#67000d",
+  name   = "Food insecurity\nrate (%)",
+  limits = c(0, 20),
+  breaks = c(0, 5, 10, 15, 20),
+  labels = c("0%", "5%", "10%", "15%", "20%")
+)
+
+map_before <- plot_usmap(
+  data      = fi_current,
+  values    = "food_insecurity_rate",
+  color     = "white",
+  linewidth = 0.3
+) +
+  shared_scale +
+  labs(title = "Today") +
+  theme(
+    legend.position  = "none",
+    plot.title       = element_text(size = 13, face = "bold", hjust = 0.5),
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background  = element_rect(fill = "white", color = NA)
+  )
+
+map_after <- plot_usmap(
+  data      = fi_projected,
+  values    = "food_insecurity_rate",
+  color     = "white",
+  linewidth = 0.3
+) +
+  shared_scale +
+  labs(title = "With Expanded SNAP Benefits") +
+  theme(
+    legend.position  = "right",
+    plot.title       = element_text(size = 13, face = "bold", hjust = 0.5),
+    legend.title     = element_text(size = 9),
+    legend.text      = element_text(size = 8),
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background  = element_rect(fill = "white", color = NA)
+  )
+
+map_before + map_after +
+  plot_annotation(
+    title    = "Expanding SNAP to Meet Nutrition Costs Would Visibly Reduce Hunger Nationwide",
+    subtitle = "National average falls from 13.5% to an estimated 10.8%. The South sees the largest reductions.\nBoth maps use the same color scale for direct comparison.",
+    caption  = "Source: Feeding America MMG 2025 (2023 data); USDA Thrifty Food Plan November 2024\nNote: Projected rates apply a conservative 20% reduction. This is a directional estimate, not a policy simulation.",
+    theme = theme(
+      plot.title    = element_text(face = "bold", size = 13, hjust = 0.5),
+      plot.subtitle = element_text(size = 9, color = "gray30",
+                                   hjust = 0.5, lineheight = 1.4),
+      plot.caption  = element_text(size = 7, color = "gray50", lineheight = 1.3)
+    )
+  )
+```
+
+---
+
+## Conclusion
+
+Hunger in America is not a scarcity problem. The food exists. The 
+system to distribute it exists. What does not work is the policy 
+that determines who gets help and how much.
+
+Three changes would make a measurable difference. First, increase 
+SNAP benefits to meet the Thrifty Food Plan minimum cost. The gap 
+is between $124 and $252 per month depending on household size. 
+Second, replace the hard eligibility cutoff with a gradual phase-out 
+that reduces benefits slowly as income rises. Third, index benefit 
+levels to regional food costs so families in high cost states are 
+not penalized for where they live.
+
+None of these changes require a new program. They require adjustments 
+to one that already exists. The national food budget shortfall, the 
+total additional dollars food insecure Americans need to meet minimum 
+nutrition costs, is $22.6 billion per year according to Feeding 
+America. That is less than 0.3% of the federal budget.
+
+---
+
+
+
+
